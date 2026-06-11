@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: order-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: order_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: order-mailhog
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+
+volumes:
+  postgres_data:
