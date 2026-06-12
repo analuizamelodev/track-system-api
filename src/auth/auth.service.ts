@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -11,7 +11,7 @@ export class AuthService {
     async register(registerDto: RegisterDto) {
         const existingUser = await this.usersService.findUserByEmail(registerDto.email);
         if (existingUser) {
-            throw new Error('User with this email already exists');
+            throw new ConflictException();
         }
         const user = await this.usersService.createUser(registerDto.name, registerDto.email, registerDto.password);
         return user;
@@ -20,11 +20,11 @@ export class AuthService {
     async login(loginDto: LoginDto) {
         const user = await this.usersService.findUserByEmail(loginDto.email);
         if (!user) {
-            throw new Error('Invalid email or password');
+            throw new UnauthorizedException();
         }
         const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
         if (!isPasswordValid) {
-            throw new Error('Invalid email or password');
+            throw new BadRequestException();
         }
         return user;
     }
