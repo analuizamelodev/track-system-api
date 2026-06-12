@@ -13,8 +13,7 @@ export class AuthService {
         if (existingUser) {
             throw new ConflictException();
         }
-        const user = await this.usersService.createUser(registerDto.name, registerDto.email, registerDto.password);
-        return user;
+        await this.usersService.createUser(registerDto.name, registerDto.email, registerDto.password);
     }
 
     async login(loginDto: LoginDto) {
