@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated"
@@ -24,33 +19,57 @@ enum ShipmentStatus {
 
 model User {
   id        String     @id @default(uuid())
-  email     String     @unique
   name      String
+  email     String     @unique
   password  String
   shipments Shipment[]
   createdAt DateTime   @default(now())
 }
 
-model Shipment {
-  id           String          @id @default(uuid())
-  trackingCode String          @unique
-  userId       String
-  origin       String
-  destination  String
-  status       ShipmentStatus  @default(ORDER_CREATED)
-  createdAt    DateTime        @default(now())
-  events       TrackingEvent[]
-
-  user User @relation(fields: [userId], references: [id])
+model Customer {
+  id        String     @id @default(uuid())
+  name      String
+  document  String?
+  phone     String?
+  shipments Shipment[]
+  createdAt DateTime   @default(now())
 }
 
-model TrackingEvent {
-  id          String         @id @default(uuid())
+model Shipment {
+  id           String         @id @default(uuid())
+  trackingCode String         @unique
+  status       ShipmentStatus @default(ORDER_CREATED)
+  origin       String
+  destination  String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  items     ShipmentItem[]
+  recipient Recipient?
+
+  createdAt DateTime @default(now())
+}
+
+model Recipient {
+  id         String  @id @default(uuid())
+  shipmentId String  @unique
+  name       String
+  phone      String?
+  address    String
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+model ShipmentItem {
+  id          String  @id @default(uuid())
   shipmentId  String
-  location    String
-  status      ShipmentStatus @default(ORDER_CREATED)
-  description String
-  createdAt   DateTime       @default(now())
+  name        String
+  quantity    Int
+  description String?
 
   shipment Shipment @relation(fields: [shipmentId], references: [id])
 }
