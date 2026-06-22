@@ -69,7 +69,6 @@ export class ShipmentsService {
       throw new NotFoundException('Shipment not found');
     }
 
-    // 🚨 impedir alteração se já foi entregue ou cancelado
     if (
       shipment.status === ShipmentStatus.DELIVERED ||
       shipment.status === ShipmentStatus.CANCELLED
