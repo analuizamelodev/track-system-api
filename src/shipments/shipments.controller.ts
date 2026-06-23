@@ -7,7 +7,6 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-
 import { ShipmentsService } from './shipments.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CreateShipmentDto } from './dto/create-shipment.dto';

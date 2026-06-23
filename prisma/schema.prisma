@@ -8,15 +8,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum ShipmentStatus {
-  ORDER_CREATED
-  IN_PREPARATION
-  IN_TRANSIT
-  OUT_FOR_DELIVERY
-  DELIVERED
-  CANCELLED
-}
-
 model User {
   id        String     @id @default(uuid())
   name      String
@@ -36,9 +27,9 @@ model Customer {
 }
 
 model Shipment {
-  id           String         @id @default(uuid())
-  trackingCode String         @unique
-  status       ShipmentStatus @default(ORDER_CREATED)
+  id           String @id @default(uuid())
+  trackingCode String @unique
+  status       Int    @default(1)
   origin       String
   destination  String
 

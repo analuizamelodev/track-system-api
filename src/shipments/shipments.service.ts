@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
-import { ShipmentStatus } from 'src/generated/enums';
+import { ShipmentStatus } from 'src/enums/shipment-status.enum';
 import { FinishShipmentDto } from './dto/finish-shipment.dto';
 
 @Injectable()
@@ -36,6 +36,7 @@ export class ShipmentsService {
           trackingCode,
           origin: dto.origin,
           destination: dto.destination,
+          status: ShipmentStatus.ORDER_CREATED,
           userId,
           customerId: dto.customerId,
         },
@@ -60,7 +61,11 @@ export class ShipmentsService {
     }
   }
 
-  async updateStatus(shipmentId: string, status: ShipmentStatus) {
+
+  async updateStatus(
+    shipmentId: string,
+    status: ShipmentStatus,
+  ) {
     const shipment = await this.prisma.shipment.findUnique({
       where: { id: shipmentId },
     });
@@ -78,18 +83,29 @@ export class ShipmentsService {
       );
     }
 
-    const updated = await this.prisma.shipment.update({
-      where: { id: shipmentId },
-      data: { status },
-    });
 
-    return updated;
+    if (status < shipment.status) {
+      throw new BadRequestException(
+        'Shipment status cannot go backwards',
+      );
+    }
+
+
+    return this.prisma.shipment.update({
+      where: { id: shipmentId },
+      data: {
+        status: Number(status),
+      },
+    });
   }
 
-  async finishShipment(shipmentId: string, dto: FinishShipmentDto) {
+
+  async finishShipment(
+    shipmentId: string,
+    dto: FinishShipmentDto,
+  ) {
     const shipment = await this.prisma.shipment.findUnique({
       where: { id: shipmentId },
-      include: { recipient: true },
     });
 
     if (!shipment) {
@@ -97,14 +113,19 @@ export class ShipmentsService {
     }
 
     if (shipment.status === ShipmentStatus.DELIVERED) {
-      throw new BadRequestException('Shipment already delivered');
+      throw new BadRequestException(
+        'Shipment already delivered',
+      );
     }
 
     if (shipment.status === ShipmentStatus.CANCELLED) {
-      throw new BadRequestException('Shipment is cancelled');
+      throw new BadRequestException(
+        'Shipment is cancelled',
+      );
     }
 
-    const recipient = await this.prisma.recipient.create({
+
+    await this.prisma.recipient.create({
       data: {
         shipmentId,
         name: dto.name,
@@ -113,7 +134,8 @@ export class ShipmentsService {
       },
     });
 
-    const updatedShipment = await this.prisma.shipment.update({
+
+    return this.prisma.shipment.update({
       where: { id: shipmentId },
       data: {
         status: ShipmentStatus.DELIVERED,
@@ -124,14 +146,16 @@ export class ShipmentsService {
         customer: true,
       },
     });
-
-    return updatedShipment;
   }
+
 
   private generateTracking(): string {
     return (
       'BR' +
-      Math.random().toString(36).substring(2, 10).toUpperCase()
+      Math.random()
+        .toString(36)
+        .substring(2, 10)
+        .toUpperCase()
     );
   }
 }
