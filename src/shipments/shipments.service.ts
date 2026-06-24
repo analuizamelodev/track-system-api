@@ -148,6 +148,24 @@ export class ShipmentsService {
     });
   }
 
+  async findByTrackingCode(trackingCode: string) {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: {
+        trackingCode,
+      },
+      include: {
+        items: true,
+        recipient: true,
+        customer: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    return shipment;
+  }
 
   private generateTracking(): string {
     return (
