@@ -40,7 +40,7 @@ export class CustomerService {
     });
 
     if (!customer) {
-      throw new NotFoundException('Customer não encontrado');
+      throw new NotFoundException('Cliente não encontrado');
     }
 
     return customer;

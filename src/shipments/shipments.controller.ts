@@ -30,7 +30,6 @@ export class ShipmentsController {
     @Body() dto: CreateShipmentDto,
     @Req() req,
   ) {
-    console.log('REQ USER:', req.user);
     const userId = req.user.sub;
 
     return this.shipmentsService.create(

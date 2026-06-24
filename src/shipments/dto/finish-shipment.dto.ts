@@ -23,7 +23,6 @@ export class FinishShipmentDto {
         description: 'Endereço onde a entrega foi recebida',
     })
     @IsString()
-    @MinLength(5)
     address!: string;
 
 

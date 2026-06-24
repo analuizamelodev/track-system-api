@@ -38,7 +38,7 @@ class ShipmentItemDto {
 
 export class CreateShipmentDto {
     @ApiProperty({
-        example: 'customer-id-123',
+        example: 'cliente-id-123',
         description: 'ID do cliente que está solicitando o envio',
     })
     @IsString()
@@ -79,7 +79,7 @@ export class CreateShipmentDto {
     })
     @IsArray()
     @ArrayMinSize(1, {
-        message: 'At least one item is required for a shipment',
+        message: 'É necessário pelo menos um item para o envio.',
     })
     @ValidateNested({ each: true })
     @Type(() => ShipmentItemDto)

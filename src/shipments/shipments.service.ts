@@ -19,7 +19,7 @@ export class ShipmentsService {
 
       if (!dto.items || dto.items.length === 0) {
         throw new BadRequestException(
-          'At least one item is required for a shipment',
+          'É necessário pelo menos um item para o envio.',
         );
       }
 
@@ -28,7 +28,7 @@ export class ShipmentsService {
       });
 
       if (!customer) {
-        throw new NotFoundException('Customer not found');
+        throw new NotFoundException('Cliente não encontrado');
       }
 
       const shipment = await this.prisma.shipment.create({
@@ -56,7 +56,7 @@ export class ShipmentsService {
       console.error(error);
 
       throw new InternalServerErrorException(
-        'Failed to create shipment',
+        'Falha ao criar encomenda',
       );
     }
   }
@@ -71,7 +71,7 @@ export class ShipmentsService {
     });
 
     if (!shipment) {
-      throw new NotFoundException('Shipment not found');
+      throw new NotFoundException('Encomenda não encontrada');
     }
 
     if (
@@ -79,14 +79,14 @@ export class ShipmentsService {
       shipment.status === ShipmentStatus.CANCELLED
     ) {
       throw new BadRequestException(
-        'Cannot update a finished shipment',
+        'Encomenda entregue ou cancelada',
       );
     }
 
 
     if (status < shipment.status) {
       throw new BadRequestException(
-        'Shipment status cannot go backwards',
+        'Novo status deve ser maior que o atual',
       );
     }
 
@@ -109,18 +109,24 @@ export class ShipmentsService {
     });
 
     if (!shipment) {
-      throw new NotFoundException('Shipment not found');
+      throw new NotFoundException('Encomenda não encontrada');
+    }
+
+    if (dto.address.trim() !== shipment.destination.trim()) {
+      throw new BadRequestException(
+        'O endereço informado deve ser igual ao destino da encomenda',
+      );
     }
 
     if (shipment.status === ShipmentStatus.DELIVERED) {
       throw new BadRequestException(
-        'Shipment already delivered',
+        'Encomenda entregue',
       );
     }
 
     if (shipment.status === ShipmentStatus.CANCELLED) {
       throw new BadRequestException(
-        'Shipment is cancelled',
+        'Encomenda cancelada',
       );
     }
 
@@ -161,7 +167,7 @@ export class ShipmentsService {
     });
 
     if (!shipment) {
-      throw new NotFoundException('Shipment not found');
+      throw new NotFoundException('Encomenda não encontrada');
     }
 
     return shipment;
