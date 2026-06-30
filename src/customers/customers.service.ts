@@ -8,7 +8,7 @@ import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
-export class CustomerService {
+export class CustomersService {
   constructor(
     private readonly prisma: PrismaService,
   ) { }

@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { CustomerService } from './customers.service';
+import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -18,7 +18,7 @@ import { AuthGuard } from 'src/auth/auth.guard';
 @Controller('customers')
 @UseGuards(AuthGuard)
 export class CustomerController {
-  constructor(private readonly customerService: CustomerService) { }
+  constructor(private readonly customerService: CustomersService) { }
 
   @Post()
   create(@Body() dto: CreateCustomerDto) {
