@@ -26,7 +26,7 @@ export class ShipmentsController {
   ) { }
 
   @Post()
-  createShipment(
+  create(
     @Body() dto: CreateShipmentDto,
     @Req() req,
   ) {
@@ -39,7 +39,7 @@ export class ShipmentsController {
   }
 
   @Patch(':id/status')
-  updateStatus(
+  update(
     @Param('id') id: string,
     @Body() dto: UpdateShipmentStatusDto,
   ) {
@@ -50,7 +50,7 @@ export class ShipmentsController {
   }
 
   @Patch(':id/finish')
-  finishShipment(
+  finish(
     @Param('id') id: string,
     @Body() dto: FinishShipmentDto,
   ) {
