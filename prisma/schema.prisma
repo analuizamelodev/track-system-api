@@ -38,8 +38,27 @@ model Shipment {
   id           String @id @default(uuid())
   trackingCode String @unique
   status       Int    @default(1)
-  origin       String
-  destination  String
+  serviceType  String
+  weight       Float
+  estimatedDelivery DateTime?
+
+  // Remetente + Origem
+  senderName          String
+  originStreet        String
+  originNumber        String
+  originNeighborhood  String
+  originCity          String
+  originState         String
+  originCep           String
+
+  // Destinatário + Destino
+  recipientName           String
+  destinationStreet       String
+  destinationNumber       String
+  destinationNeighborhood String
+  destinationCity         String
+  destinationState        String
+  destinationCep          String
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
@@ -60,22 +79,25 @@ model Shipment {
 }
 
 model TrackingEvent {
-  id          String   @id @default(uuid())
-  shipmentId  String
-  shipment    Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
-  status      Int
-  description String?
-  createdAt   DateTime @default(now())
+  id            String   @id @default(uuid())
+  shipmentId    String
+  shipment      Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  status        Int
+  description   String?
+  location      String?
+  changedById   String?
+  changedByName String?
+  createdAt     DateTime @default(now())
 
   @@index([shipmentId])
 }
 
 model Recipient {
-  id         String  @id @default(uuid())
-  shipmentId String  @unique
-  name       String
-  phone      String?
-  address    String
+  id           String  @id @default(uuid())
+  shipmentId   String  @unique
+  signedName   String
+  deliveryCep  String
+  phone        String?
 
   shipment Shipment @relation(fields: [shipmentId], references: [id])
 }

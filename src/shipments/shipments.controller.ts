@@ -1,13 +1,13 @@
 import {
-  Body,
-  Controller,
-  Param,
-  Patch,
-  Post,
-  UseGuards,
-  Req,
-  Get,
-  Query,
+    Body,
+    Controller,
+    Param,
+    Patch,
+    Post,
+    UseGuards,
+    Req,
+    Get,
+    Query,
 } from '@nestjs/common';
 import { ShipmentsService } from './shipments.service';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -21,78 +21,69 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from 'src/auth/public.decorator';
 import { UserRole } from 'src/enums/user-role.enum';
 
+const ALL_INTERNAL = [UserRole.ADMIN, UserRole.OPERATOR];
+
 @ApiBearerAuth('access-token')
 @Controller('shipments')
 @UseGuards(AuthGuard, RolesGuard)
 export class ShipmentsController {
+    constructor(
+        private readonly shipmentsService: ShipmentsService,
+    ) { }
 
-  constructor(
-    private readonly shipmentsService: ShipmentsService,
-  ) { }
+    @Post()
+    @Roles(...ALL_INTERNAL)
+    create(@Body() dto: CreateShipmentDto, @Req() req) {
+        return this.shipmentsService.create(dto, req.user.sub);
+    }
 
-  @Post()
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  create(
-    @Body() dto: CreateShipmentDto,
-    @Req() req,
-  ) {
-    const userId = req.user.sub;
+    @Get()
+    @Roles(...ALL_INTERNAL)
+    findAll(@Query() query: ListShipmentsQueryDto) {
+        return this.shipmentsService.findAll(query);
+    }
 
-    return this.shipmentsService.create(
-      dto,
-      userId,
-    );
-  }
+    @Get('tracking/:trackingCode')
+    @Public()
+    findByTrackingCode(@Param('trackingCode') trackingCode: string) {
+        return this.shipmentsService.findByTrackingCode(trackingCode);
+    }
 
-  @Get()
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  findAll(@Query() query: ListShipmentsQueryDto) {
-    return this.shipmentsService.findAll(query);
-  }
+    @Get(':id')
+    @Roles(...ALL_INTERNAL)
+    findOne(@Param('id') id: string) {
+        return this.shipmentsService.findOne(id);
+    }
 
-  @Get('tracking/:trackingCode')
-  @Public()
-  findByTrackingCode(
-    @Param('trackingCode') trackingCode: string,
-  ) {
-    return this.shipmentsService.findByTrackingCode(
-      trackingCode,
-    );
-  }
+    @Patch(':id/status')
+    @Roles(...ALL_INTERNAL)
+    updateStatus(
+        @Param('id') id: string,
+        @Body() dto: UpdateShipmentStatusDto,
+        @Req() req,
+    ) {
+        return this.shipmentsService.updateStatus(
+            id,
+            dto.status,
+            req.user.sub,
+            dto.location,
+            dto.description,
+        );
+    }
 
-  @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  findOne(@Param('id') id: string) {
-    return this.shipmentsService.findOne(id);
-  }
+    @Patch(':id/finish')
+    @Roles(...ALL_INTERNAL)
+    finish(
+        @Param('id') id: string,
+        @Body() dto: FinishShipmentDto,
+        @Req() req,
+    ) {
+        return this.shipmentsService.finishShipment(id, dto, req.user.sub);
+    }
 
-  @Patch(':id/status')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  update(
-    @Param('id') id: string,
-    @Body() dto: UpdateShipmentStatusDto,
-  ) {
-    return this.shipmentsService.updateStatus(
-      id,
-      dto.status,
-    );
-  }
-
-  @Patch(':id/finish')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  finish(
-    @Param('id') id: string,
-    @Body() dto: FinishShipmentDto,
-  ) {
-    return this.shipmentsService.finishShipment(
-      id,
-      dto,
-    );
-  }
-
-  @Patch(':id/cancel')
-  @Roles(UserRole.ADMIN, UserRole.OPERATOR)
-  cancel(@Param('id') id: string) {
-    return this.shipmentsService.cancelShipment(id);
-  }
+    @Patch(':id/cancel')
+    @Roles(...ALL_INTERNAL)
+    cancel(@Param('id') id: string, @Req() req) {
+        return this.shipmentsService.cancelShipment(id, req.user.sub);
+    }
 }

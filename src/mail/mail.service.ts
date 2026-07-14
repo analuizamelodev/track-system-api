@@ -12,7 +12,7 @@ export class MailService {
     private get trackingBaseUrl(): string {
         return (
             this.config.get<string>('TRACKING_BASE_URL') ??
-            'http://localhost:3001/tracking'
+            'http://localhost:3001/track'
         );
     }
 
@@ -37,34 +37,58 @@ export class MailService {
     async sendShipmentCreated(
         email: string,
         trackingCode: string,
+        recipientName?: string,
     ) {
         const trackingUrl = `${this.trackingBaseUrl}/${trackingCode}`;
 
         return this.mailer.sendMail({
             to: email,
-            subject: 'Sua encomenda foi registrada',
+            subject: `Encomenda registrada — Código ${trackingCode}`,
             html: `
-        <h2>Encomenda registrada</h2>
-        <p>Sua encomenda foi criada com sucesso.</p>
-        <p><b>Código de rastreio:</b> ${trackingCode}</p>
-        <p>Acompanhe o andamento em:</p>
-        <a href="${trackingUrl}">${trackingUrl}</a>
-      `,
+                <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto">
+                    <h2 style="color:#1d4ed8">Encomenda registrada com sucesso!</h2>
+                    ${recipientName ? `<p>Olá, <b>${recipientName}</b>!</p>` : ''}
+                    <p>Sua encomenda foi criada e já está sendo processada.</p>
+                    <div style="background:#f1f5f9;padding:16px;border-radius:8px;margin:16px 0">
+                        <p style="margin:0;font-size:13px;color:#64748b">Código de rastreio</p>
+                        <p style="margin:4px 0;font-size:22px;font-weight:bold;letter-spacing:2px">${trackingCode}</p>
+                    </div>
+                    <p>Acompanhe o andamento da sua entrega em tempo real:</p>
+                    <a href="${trackingUrl}" style="display:inline-block;background:#1d4ed8;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">
+                        Rastrear encomenda
+                    </a>
+                    <p style="margin-top:24px;font-size:12px;color:#94a3b8">
+                        Ou acesse diretamente: ${trackingUrl}
+                    </p>
+                </div>
+            `,
         });
     }
 
     async sendShipmentDelivered(
         email: string,
         trackingCode: string,
+        recipientName?: string,
     ) {
+        const trackingUrl = `${this.trackingBaseUrl}/${trackingCode}`;
+
         return this.mailer.sendMail({
             to: email,
-            subject: 'Entrega concluída',
+            subject: `Encomenda entregue — Código ${trackingCode}`,
             html: `
-        <h2>Sua encomenda foi entregue!</h2>
-        <p>Código de rastreio:</p>
-        <b>${trackingCode}</b>
-      `,
+                <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto">
+                    <h2 style="color:#16a34a">Sua encomenda foi entregue!</h2>
+                    ${recipientName ? `<p>Olá, <b>${recipientName}</b>!</p>` : ''}
+                    <p>A entrega do seu pedido foi concluída com sucesso.</p>
+                    <div style="background:#f0fdf4;padding:16px;border-radius:8px;margin:16px 0">
+                        <p style="margin:0;font-size:13px;color:#64748b">Código de rastreio</p>
+                        <p style="margin:4px 0;font-size:22px;font-weight:bold;letter-spacing:2px">${trackingCode}</p>
+                    </div>
+                    <a href="${trackingUrl}" style="display:inline-block;background:#16a34a;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:bold">
+                        Ver histórico de rastreio
+                    </a>
+                </div>
+            `,
         });
     }
 }

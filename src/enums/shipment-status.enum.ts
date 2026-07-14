@@ -5,4 +5,8 @@ export enum ShipmentStatus {
     OUT_FOR_DELIVERY = 4,
     DELIVERED = 5,
     CANCELLED = 6,
+    EXTRAVIADO = 7,
+    DANIFICADO = 8,
+    ENDERECO_INVALIDO = 9,
+    DESTINATARIO_AUSENTE = 10,
 }
