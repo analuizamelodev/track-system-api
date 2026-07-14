@@ -17,6 +17,7 @@ export class CustomersService {
     return this.prisma.customer.create({
       data: {
         name: dto.name,
+        email: dto.email,
         document: dto.document,
         phone: dto.phone,
       },
@@ -53,6 +54,7 @@ export class CustomersService {
       where: { id },
       data: {
         name: dto.name,
+        email: dto.email,
         document: dto.document,
         phone: dto.phone,
       },

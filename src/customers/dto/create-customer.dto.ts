@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCustomerDto {
@@ -8,6 +8,14 @@ export class CreateCustomerDto {
     })
     @IsString()
     name!: string;
+
+    @ApiPropertyOptional({
+        example: 'maria@email.com',
+        description: 'E-mail do cliente para notificações de rastreio',
+    })
+    @IsOptional()
+    @IsEmail()
+    email?: string;
 
     @ApiPropertyOptional({
         example: '12345678900',
