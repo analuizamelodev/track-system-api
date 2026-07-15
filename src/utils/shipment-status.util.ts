@@ -40,12 +40,12 @@ export const STATUS_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
         ShipmentStatus.OUT_FOR_DELIVERY,
         ShipmentStatus.EXTRAVIADO,
         ShipmentStatus.DANIFICADO,
-        ShipmentStatus.ENDERECO_INVALIDO,
     ],
 
     [ShipmentStatus.OUT_FOR_DELIVERY]: [
         ShipmentStatus.DESTINATARIO_AUSENTE,
         ShipmentStatus.DANIFICADO,
+        ShipmentStatus.ENDERECO_INVALIDO,
         // DELIVERED somente via /finish
     ],
 

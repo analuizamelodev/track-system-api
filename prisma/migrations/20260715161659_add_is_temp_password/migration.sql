@@ -1,0 +1,29 @@
+-- AlterTable
+ALTER TABLE "Customer" ALTER COLUMN "updatedAt" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "Recipient" ALTER COLUMN "signedName" DROP DEFAULT,
+ALTER COLUMN "deliveryCep" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "Shipment" ALTER COLUMN "updatedAt" DROP DEFAULT,
+ALTER COLUMN "serviceType" DROP DEFAULT,
+ALTER COLUMN "weight" DROP DEFAULT,
+ALTER COLUMN "senderName" DROP DEFAULT,
+ALTER COLUMN "originStreet" DROP DEFAULT,
+ALTER COLUMN "originNumber" DROP DEFAULT,
+ALTER COLUMN "originNeighborhood" DROP DEFAULT,
+ALTER COLUMN "originCity" DROP DEFAULT,
+ALTER COLUMN "originState" DROP DEFAULT,
+ALTER COLUMN "originCep" DROP DEFAULT,
+ALTER COLUMN "recipientName" DROP DEFAULT,
+ALTER COLUMN "destinationStreet" DROP DEFAULT,
+ALTER COLUMN "destinationNumber" DROP DEFAULT,
+ALTER COLUMN "destinationNeighborhood" DROP DEFAULT,
+ALTER COLUMN "destinationCity" DROP DEFAULT,
+ALTER COLUMN "destinationState" DROP DEFAULT,
+ALTER COLUMN "destinationCep" DROP DEFAULT;
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "isTempPassword" BOOLEAN NOT NULL DEFAULT true,
+ALTER COLUMN "updatedAt" DROP DEFAULT;
