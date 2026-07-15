@@ -14,6 +14,7 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
+import { CancelShipmentDto } from './dto/cancel-shipment.dto';
 import { FinishShipmentDto } from './dto/finish-shipment.dto';
 import { UpdateShipmentStatusDto } from './dto/update-shipment-status.dto';
 import { ListShipmentsQueryDto } from './dto/list-shipments-query.dto';
@@ -83,7 +84,16 @@ export class ShipmentsController {
 
     @Patch(':id/cancel')
     @Roles(...ALL_INTERNAL)
-    cancel(@Param('id') id: string, @Req() req) {
-        return this.shipmentsService.cancelShipment(id, req.user.sub);
+    cancel(
+        @Param('id') id: string,
+        @Body() dto: CancelShipmentDto,
+        @Req() req,
+    ) {
+        return this.shipmentsService.cancelShipment(
+            id,
+            req.user.sub,
+            dto.description,
+            dto.location,
+        );
     }
 }

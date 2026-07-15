@@ -16,6 +16,7 @@ import {
     canFinish,
     formatAddress,
     getAllowedTransitions,
+    getRequiredFields,
     getShipmentStatusLabel,
     isAllowedTransition,
     isTerminal,
@@ -172,44 +173,57 @@ export class ShipmentsService {
         location?: string,
         description?: string,
     ) {
+        // --- Guarda 1: estados reservados para endpoints dedicados ---
+        if (status === ShipmentStatus.DELIVERED) {
+            throw new BadRequestException(
+                'Use o endpoint PATCH /shipments/:id/finish para registrar uma entrega — ' +
+                'ele exige assinatura do destinatário e confirmação do CEP.',
+            );
+        }
+        if (status === ShipmentStatus.CANCELLED) {
+            throw new BadRequestException(
+                'Use o endpoint PATCH /shipments/:id/cancel para cancelar uma encomenda.',
+            );
+        }
+
         const shipment = await this.prisma.shipment.findUnique({
             where: { id: shipmentId },
-            include: { user: { select: { name: true } } },
         });
 
         if (!shipment) throw new NotFoundException('Encomenda não encontrada');
 
-        if (
-            status === ShipmentStatus.DELIVERED ||
-            status === ShipmentStatus.CANCELLED
-        ) {
-            const label = getShipmentStatusLabel(status);
-            const endpoint =
-                status === ShipmentStatus.DELIVERED
-                    ? 'PATCH /shipments/:id/finish'
-                    : 'PATCH /shipments/:id/cancel';
-            throw new BadRequestException(
-                `O status "${label}" só pode ser definido pelo endpoint dedicado: ${endpoint}.`,
-            );
-        }
-
+        // --- Guarda 2: estado terminal ---
         if (isTerminal(shipment.status)) {
             throw new BadRequestException(
-                `A encomenda está em estado final "${getShipmentStatusLabel(shipment.status)}" e não aceita novas transições.`,
+                `A encomenda já está em estado final "${getShipmentStatusLabel(shipment.status)}" e não aceita novas atualizações.`,
             );
         }
 
+        // --- Guarda 3: transição permitida ---
         if (!isAllowedTransition(shipment.status, status)) {
             const from = getShipmentStatusLabel(shipment.status);
-            const to = getShipmentStatusLabel(status);
-            const allowed = getAllowedTransitions(shipment.status)
-                .map(getShipmentStatusLabel)
-                .join(', ');
+            const to   = getShipmentStatusLabel(status);
+            const allowed = getAllowedTransitions(shipment.status).map(getShipmentStatusLabel);
+            const hint = allowed.length
+                ? `Próximos permitidos via este endpoint: ${allowed.join(', ')}.`
+                : `Para encerrar use /cancel ou /finish.`;
             throw new BadRequestException(
-                `Transição inválida: "${from}" → "${to}". ` +
-                (allowed
-                    ? `Transições permitidas a partir deste status: ${allowed}.`
-                    : `Nenhuma transição disponível via este endpoint.`),
+                `Transição inválida: "${from}" → "${to}". ${hint}`,
+            );
+        }
+
+        // --- Guarda 4: campos obrigatórios por status ---
+        const requiredFields = getRequiredFields(status);
+        const missing: string[] = [];
+        if (requiredFields.includes('location') && !location?.trim()) {
+            missing.push('"location" (localização atual da encomenda)');
+        }
+        if (requiredFields.includes('description') && !description?.trim()) {
+            missing.push('"description" (descrição obrigatória para este status)');
+        }
+        if (missing.length) {
+            throw new BadRequestException(
+                `O status "${getShipmentStatusLabel(status)}" exige os seguintes campos: ${missing.join('; ')}.`,
             );
         }
 
@@ -218,22 +232,30 @@ export class ShipmentsService {
             select: { name: true },
         });
 
-        await this.prisma.$transaction([
-            this.prisma.shipment.update({
-                where: { id: shipmentId },
-                data: { status: Number(status) },
-            }),
-            this.prisma.trackingEvent.create({
+        const isRepeatTransit =
+            shipment.status === ShipmentStatus.IN_TRANSIT &&
+            status === ShipmentStatus.IN_TRANSIT;
+
+        await this.prisma.$transaction(async (tx) => {
+            // IN_TRANSIT → IN_TRANSIT: apenas adiciona evento, não altera o status do shipment
+            if (!isRepeatTransit) {
+                await tx.shipment.update({
+                    where: { id: shipmentId },
+                    data: { status: Number(status) },
+                });
+            }
+
+            await tx.trackingEvent.create({
                 data: {
                     shipmentId,
                     status: Number(status),
-                    description: description ?? getShipmentStatusLabel(status),
-                    location,
+                    description: description?.trim() ?? getShipmentStatusLabel(status),
+                    location: location?.trim() ?? null,
                     changedById: userId,
                     changedByName: user?.name,
                 },
-            }),
-        ]);
+            });
+        });
 
         return this.findOne(shipmentId);
     }
@@ -252,7 +274,8 @@ export class ShipmentsService {
 
         if (!canFinish(shipment.status)) {
             throw new BadRequestException(
-                `Não é possível finalizar uma entrega com status "${getShipmentStatusLabel(shipment.status)}". A encomenda deve estar em "Saiu para entrega" ou "Danificado".`,
+                `Não é possível confirmar a entrega com status "${getShipmentStatusLabel(shipment.status)}". ` +
+                `A encomenda deve estar em "Saiu para entrega" para ser finalizada.`,
             );
         }
 
@@ -306,7 +329,7 @@ export class ShipmentsService {
         return this.findOne(shipmentId);
     }
 
-    async cancelShipment(shipmentId: string, userId: string, location?: string) {
+    async cancelShipment(shipmentId: string, userId: string, description?: string, location?: string) {
         const shipment = await this.prisma.shipment.findUnique({
             where: { id: shipmentId },
         });
@@ -314,8 +337,11 @@ export class ShipmentsService {
         if (!shipment) throw new NotFoundException('Encomenda não encontrada');
 
         if (!canCancel(shipment.status)) {
+            const currentLabel = getShipmentStatusLabel(shipment.status);
             throw new BadRequestException(
-                `Não é possível cancelar uma encomenda com status "${getShipmentStatusLabel(shipment.status)}". O cancelamento só é permitido antes do início do transporte.`,
+                `Não é possível cancelar uma encomenda com status "${currentLabel}". ` +
+                `O cancelamento é permitido apenas nos status: Pedido criado, Em preparação, ` +
+                `Extraviado, Danificado, Endereço inválido ou Destinatário ausente.`,
             );
         }
 
@@ -333,8 +359,8 @@ export class ShipmentsService {
                 data: {
                     shipmentId,
                     status: ShipmentStatus.CANCELLED,
-                    description: getShipmentStatusLabel(ShipmentStatus.CANCELLED),
-                    location,
+                    description: description?.trim() || 'Encomenda cancelada',
+                    location: location?.trim() ?? null,
                     changedById: userId,
                     changedByName: user?.name,
                 },
